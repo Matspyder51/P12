@@ -9,7 +9,7 @@ class ContractFilter(filters.FilterSet):
         label="Sort by a given value (amount, -amount...)",
     )
 
-    def filter_sorty_by(self, queryset, name, value):
+    def filter_sort_by(self, queryset, name, value):
         values = value.lower().split(',')
         return queryset.order_by(*values)
 
@@ -30,7 +30,7 @@ class EventFilter(filters.FilterSet):
         label="Sort by a given value (event_date, -event_date...)",
     )
 
-    def filter_sorty_by(self, queryset, name, value):
+    def filter_sort_by(self, queryset, name, value):
         values = value.lower().split(',')
         return queryset.order_by(*values)
 
