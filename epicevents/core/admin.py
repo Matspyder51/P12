@@ -9,7 +9,7 @@ admin.site.register([Client, Contract, Event])
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ("username", "password", "first_name", "last_name", "email", "groups")
+        fields = ("username", "password", "first_name", "last_name", "email", "groups", "is_staff")
 
     def save(self, commit=True):
         user = super().save(commit=False)
