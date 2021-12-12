@@ -1,14 +1,16 @@
 from datetime import datetime
 from django.utils.timezone import make_aware
-from rest_framework import viewsets, mixins
-from rest_framework.decorators import permission_classes
+from rest_framework import viewsets, mixins, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.decorators import action
 
 from .permissions import ClientPermissions, ContractPermission, EventPermission
-from .models import Client, Contract, Event
+from .models import Client, Contract, Event, User
 from .serializers import ClientSerializer, ClientListSerializer, ContractSerializer, ContractListSerializer, EventSerializer, EventListSerializer
 from .filters import ContractFilter, EventFilter
+
+import random
 
 
 class CustomFilterableListMixin:
@@ -48,12 +50,31 @@ class ClientViewSet(CustomFilterableListMixin, CustomUpdatableMixin, viewsets.Mo
         'lastname',
         'company_name',
         'sales_contact',
-        'email',
-        'converted'
+        'email'
     ]
 
     def perform_create(self, serializer):
         serializer.save(sales_contact=self.request.user)
+
+    @action(methods=['POST', 'GET'], detail=True)
+    def contracts(self, request, pk=None):
+        self.check_object_permissions(request, self.get_object())
+        if request.method == 'POST':
+            client = self.get_object()
+            serializer = ContractSerializer(data=request.data, context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            data = serializer.validated_data
+            contract = Contract(**data)
+            contract.client = client
+            contract.sales_contact = request.user
+            contract.save()
+            serializer = ContractSerializer(contract, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            queryset = Contract.objects.filter(client__pk=pk)
+            page = self.paginate_queryset(queryset)
+            serializer = ContractListSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
 
 
 class ContractViewSet(CustomFilterableListMixin, mixins.RetrieveModelMixin, CustomUpdatableMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
@@ -62,6 +83,27 @@ class ContractViewSet(CustomFilterableListMixin, mixins.RetrieveModelMixin, Cust
     serializer_class = ContractSerializer
     list_serializer_class = ContractListSerializer
     filterset_class = ContractFilter
+
+    @action(methods=['GET', 'POST'], detail=True)
+    def events(self, request, pk=None):
+        self.check_object_permissions(request, self.get_object())
+        if request.method == 'POST':
+            contract = self.get_object()
+            serializer = EventSerializer(data=request.data, context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            serializer.validate_contract(pk)
+            data = serializer.validated_data
+            event = Event(**data)
+            event.client = contract.client
+            event.support_contact = random.choice(User.objects.all().filter(groups__name='support_team'))
+            event.save()
+            serializer = EventSerializer(event, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            queryset = Event.objects.filter(contract=pk)
+            page = self.paginate_queryset(queryset)
+            serializer = EventListSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
 
 class EventViewSet(CustomFilterableListMixin, mixins.RetrieveModelMixin, CustomUpdatableMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, EventPermission]
