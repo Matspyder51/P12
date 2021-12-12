@@ -16,17 +16,47 @@ class ClientListSerializer(serializers.ModelSerializer):
             'company_name',
             'sales_contact',
             'email',
-            'mobile',
-            'phone',
-            'created_at',
-            'updated_at',
             'url',
         ]
 
         read_only_fields = [
+            'sales_contact'
+        ]
+
+class ContractNestedSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Contract
+        fields = [
+            'id',
+            'url',
+        ]
+
+class ClientSerializer(serializers.ModelSerializer):
+
+    contracts = ContractNestedSerializer(many=True, read_only=True)
+    sales_contact = relations.StringRelatedField()
+
+    class Meta:
+        model = Client
+        fields = [
+            'id',
+            'firstname',
+            'lastname',
+            'company_name',
+            'sales_contact',
+            'email',
+            'phone',
+            'mobile',
+            'contracts',
+            'created_at',
+            'updated_at',
+            'url',
+        ]
+        read_only_fields = [
             'sales_contact',
             'created_at',
-            'updated_at'
+            'updated_at',
         ]
 
 class ClientNestedSerializer(serializers.ModelSerializer):
@@ -66,10 +96,29 @@ class ContractListSerializer(serializers.ModelSerializer):
             'status',
             'amount',
             'client',
+            'url',
+        ]
+
+
+class ContractSerializer(serializers.ModelSerializer):
+
+    client = ClientNestedSerializer(read_only=True)
+
+    class Meta:
+        model = Contract
+        fields = [
+            'id',
+            'amount',
+            'payment',
+            'status',
+            'client',
             'created_at',
             'updated_at',
-            'payment',
             'url',
+        ]
+        read_only_fields = [
+            'created_at',
+            'updated_at',
         ]
 
 class EventListSerializer(serializers.ModelSerializer):
@@ -86,7 +135,28 @@ class EventListSerializer(serializers.ModelSerializer):
             'notes',
             'support_contact',
             'client',
+            'url',
+        ]
+
+
+class EventSerializer(serializers.ModelSerializer):
+
+    support_contact = UserNestedSerializer(read_only=True)
+
+    class Meta:
+        model = Event
+        fields = [
+            'support_contact',
+            'attendees',
+            'event_date',
+            'notes',
             'created_at',
             'updated_at',
-            'url',
+            'url'
+        ]
+
+        read_only_fields = [
+            'support_contact',
+            'created_at',
+            'updated_at'
         ]
