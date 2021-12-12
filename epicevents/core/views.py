@@ -33,7 +33,7 @@ class CustomFilterableListMixin:
         kwargs.setdefault('context', self.get_serializer_context())
         return serializer_class(*args, **kwargs)
 
-class CustomUpdatableMixin:
+class CustomUpdatableMixin(mixins.UpdateModelMixin):
 
     def perform_update(self, serializer):
         serializer.save(updated_at=make_aware(datetime.now()))
