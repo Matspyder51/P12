@@ -154,3 +154,40 @@ JWT_AUTH = {
     "JWT_EXPIRATION_DELTA": datetime.timedelta(seconds=3000),
     "JWT_AUTH_HEADER_PREFIX": "Bearer",
 }
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'epicevents_formater': {
+            '()': 'core.logging.logging.EpicEventsLogFormatter',
+            'format': '[{levelname}] [{asctime}] {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+        },
+        'django_errors_log_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'formatter': 'epicevents_formater',
+            'filename': 'errors.log'
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'epicevents_formater',
+            'filename': 'logs.log'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'django_errors_log_file', 'file'],
+            'level': 'INFO',
+        },
+    },
+}
